@@ -58,7 +58,7 @@ def index():
 
 
 dataset = tablib.Dataset()
-with open(os.path.join(os.path.dirname(__file__),'data_new.csv')) as f:
+with open(os.path.join(os.path.dirname(__file__), 'data_new.csv')) as f:
     dataset.csv = f.read()
 
 
