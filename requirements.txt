@@ -8,6 +8,7 @@ cycler==0.10.0
 decorator==4.3.0
 et-xmlfile==1.0.1
 Flask==1.0.2
+gunicorn==19.9.0
 html5lib==1.0.1
 idna==2.7
 ipython-genutils==0.2.0
