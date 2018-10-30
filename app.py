@@ -112,7 +112,6 @@ def date():
 
                 except ValueError:
                     wtr.writerow(("Date", "PumpPriceP", "PumpPriceD", "DutyP", "DutyD", "VatP", "VatD"))
-            # add inflation data
 
         return render_template('date.html')
 
@@ -131,9 +130,51 @@ def inflation():
         if '2006 JAN' in str(td):
             index_infl_start = table.index(tr)
         data.append(td)
-    data = data[int(index_infl_start):]
+    inflation_data = data[int(index_infl_start):]
 
-    return render_template('date.html', data=data)
+    # convert to clean array list (['MM/YYYY'],[Inflation rate])
+    inflation_data_clean = []
+    for x in inflation_data:
+        inflation_data_clean.append(str(x))
+    finaldata = []
+    month_dict = {"JAN": "01",
+                  "FEB": "02",
+                  "MAR": "03",
+                  "APR": "04",
+                  "MAY": "05",
+                  "JUN": "06",
+                  "JUL": "07",
+                  "AUG": "08",
+                  "SEP": "09",
+                  "OCT": "10",
+                  "NOV": "11",
+                  "DEC": "12"}
+    for i in inflation_data_clean:
+        year = i[5:9]
+        month_raw = i[10:13]
+        month = month_dict[month_raw]
+        inflation = (i[24:27])
+        item = [[year + '-' + month], [inflation]]
+        finaldata.append(item)
+
+    # add inflation to relevent column
+    with open('data_date.csv', 'r') as inputfile:
+        rdr = csv.reader(inputfile)
+        with open('data_inflation.csv', 'w') as outputfile:
+            wtr = csv.writer(outputfile)
+            for row in rdr:
+                if row[0][0] != str(2):
+                    row.append("inflation")
+                    wtr.writerow(row)
+                else:
+                    date = row[0][0:7]
+                    for x in finaldata:
+                        if date in x[0]:
+                            infl = (str(x[1]))
+                            infl_rate = infl[2:5]
+                            row.append(infl_rate)
+                            wtr.writerow(row)
+    return render_template('date.html', data=finaldata)
 
 
 if __name__ == '__main__':

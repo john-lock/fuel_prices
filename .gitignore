@@ -1,0 +1,5 @@
+venv/bin
+venv/include
+venv/lib
+venv/local
+__pycache__/
