@@ -1,5 +1,4 @@
-from flask import Flask, render_template, Markup, redirect
-import json
+from flask import Flask, render_template, Markup
 import requests
 import datetime
 import plotly
@@ -8,9 +7,7 @@ import os
 import re
 import tablib
 import plotly.graph_objs as go
-import csv
 from bs4 import BeautifulSoup
-
 import pandas as pd
 from plotly.offline import plot
 from plotly.graph_objs import Scatter
@@ -20,7 +17,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    df = pd.read_csv('data_date.csv', sep=',')
+    df = pd.read_csv('data_inflation.csv', sep=',')
 
     trace1 = Scatter(
         x=df['Date'],
@@ -34,18 +31,32 @@ def index():
         name="Duty rate(pence/litre)",
         fill="tozeroy")
 
-    data = [trace1, trace2]
+    trace3 = Scatter(
+        x=df['Date'],
+        y=df['inflation'],
+        name="Inflation",
+        yaxis='y2')
+
+    data = [trace1, trace2, trace3]
     layout = go.Layout(
+    title='UK Fuels Prices 2006-present',
     showlegend=True,
     xaxis=dict(
         type='category',
     ),
     yaxis=dict(
         type='linear',
+        title='Price per litre',
         range=[1, 150],
         dtick=20,
         ticksuffix='p'
-    ))
+    ),
+    yaxis2=dict (
+        overlaying='y',
+        title='Inflation rate',
+        side='right',
+        showgrid=False,
+        ticksuffix='%'))
     fig = dict(data=data, layout=layout)
     # a = py.plot(data, output_type='div')
     a = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
@@ -53,8 +64,12 @@ def index():
     # stats
     table_len = len(df['PumpPriceP'])
     this_week = df['PumpPriceP'][(table_len - 1)]
+    last_week = df['PumpPriceP'][(table_len - 2)]
+    change = float(this_week) - float(last_week)
+    week_change = change / float(last_week) * 100
+    print(week_change)
 
-    return render_template('index.html', a=Markup(a), this_week=this_week)
+    return render_template('index.html', a=Markup(a), this_week=this_week, week_change=week_change, last_week=last_week)
 
 
 dataset = tablib.Dataset()

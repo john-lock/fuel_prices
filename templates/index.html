@@ -2,19 +2,40 @@
 
 <head>
     <style type="text/css">
-   #graph {
-    width: 80%;
-    height: 65%;
-   } 
+    #info {
+        border-radius: 15px 50px 30px;
+    background: #a5d5ff;
+    padding: 20px; 
+    width: 200px;
+    height: 150px;
+    align-self: center; 
+    }
+    #graph {
+        width: 800px;
+        height: 600px;
+    }
+    #links {
+        align-self:center;
+    }
+    .flex-container {
+        display: flex;
+        justify-content: flex-start;
+    }
     </style>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>    
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
-    <div id="top"><h3>UK Fuels Prices 2003-present</h3><span>Github</span>
-        <br> P Price this week:{{ this_week }}p/litre</row></div>
-    <div id="graph">{{ a }}</div>
-    <div id="bottom">Data provided by <a href="https://www.gov.uk/government/statistical-data-sets/oil-and-petroleum-products-weekly-statistics">gov.uk</a>
+    <div class="flex-container">
+        <div id="info">
+            <br>Price this week:{{ this_week }}p/litre. {% if week_change>0 %} {{ week_change }}% less than last week, {% elif week_change<0 %} {{ week_change }}% more than last week. {% else %} the same as last week. {% endif %} ({{ last_week }}p)
+            
+        </div>
+        <div id="graph">{{ a }}</div>
+        <div id="links">Data provided by <a href="https://www.gov.uk/government/statistical-data-sets/oil-and-petroleum-products-weekly-statistics">gov.uk</a> <hr>
+            <a href="https://github.com/john-lock/fuel_prices"><img src="static/github.png"> </a><p>View on Github</p>
+        </div>
     </div>
 </body>
+
 </html>
