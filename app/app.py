@@ -5,6 +5,7 @@ import datetime
 import plotly
 import csv
 import os
+import re
 import tablib
 import plotly.graph_objs as go
 import csv
@@ -50,8 +51,8 @@ def index():
     a = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
 
     # stats
-    l = len(df['PumpPriceP'])
-    this_week = df['PumpPriceP'][(l - 1)]
+    table_len = len(df['PumpPriceP'])
+    this_week = df['PumpPriceP'][(table_len - 1)]
 
     return render_template('index.html', a=Markup(a), this_week=this_week)
 
@@ -63,7 +64,14 @@ with open(os.path.join(os.path.dirname(__file__),'data_new.csv')) as f:
 
 @app.route('/update')
 def update():
-    url = "https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/744680/CSV.csv/preview"
+    base_url = 'https://www.gov.uk/government/statistical-data-sets/oil-and-petroleum-products-weekly-statistics'
+    page = requests.get(base_url)
+    soup = BeautifulSoup(page.text, 'html.parser')
+    section = soup.find_all('div', class_='attachment-details')
+    pattern = re.compile(r'[\/]\w+[\/]\w+[\/]\w+[\/]\w+[\/]\w+[\/]\w+[\/]\d+[\/][C][S][V][.][c][s][v][\/]')
+    extra_url_raw = pattern.findall(str(section))
+    extra_url = (", ".join(extra_url_raw))
+    url = 'https://www.gov.uk' + extra_url + "preview"
     for i, df in enumerate(pd.read_html(url)):
         df.to_csv('data_new.csv')
 
@@ -77,7 +85,7 @@ def clean():
     # Remove blank columns
     with open('data_new.csv', 'r') as inputfile:
         rdr = csv.reader(inputfile)
-        with open('data_clean.csv','w') as outputfile:
+        with open('data_clean.csv', 'w') as outputfile:
             wtr = csv.writer(outputfile)
             for row in rdr:
                 try:
@@ -89,13 +97,14 @@ def clean():
     return render_template('clean.html')
 
 
-# Reformat date and set Headers
+# Reformat date and set Headers, Add inflation
 @app.route('/date')
 def date():
     with open('data_clean.csv', 'r') as inputfile:
         rdr = csv.reader(inputfile)
         with open('data_date.csv', 'w') as outputfile:
             wtr = csv.writer(outputfile)
+            # reformat date
             for row in rdr:
                 try:
                     date_format = datetime.datetime.strptime(row[0], '%d/%m/%Y').strftime('%Y-%m-%d')
@@ -103,8 +112,28 @@ def date():
 
                 except ValueError:
                     wtr.writerow(("Date", "PumpPriceP", "PumpPriceD", "DutyP", "DutyD", "VatP", "VatD"))
+            # add inflation data
 
         return render_template('date.html')
+
+
+@app.route('/inflation')
+def inflation():
+    url = 'https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23'
+    page = requests.get(url)
+    soup = BeautifulSoup(page.text, 'html.parser')
+    data = []
+    index_infl_start = 0
+    table = soup.find_all('tr')
+    for tr in table:
+        td = tr.find_all('td')
+        # Find index of where relevent inflation dates start (2006 JAN)
+        if '2006 JAN' in str(td):
+            index_infl_start = table.index(tr)
+        data.append(td)
+    data = data[int(index_infl_start):]
+
+    return render_template('date.html', data=data)
 
 
 if __name__ == '__main__':
@@ -113,8 +142,6 @@ if __name__ == '__main__':
 
 # Title, Axis labels/Key
 
-
-
 # Run clean to get update, then app.py 
 # Inflation adjusted
-# overlay oil price
+
