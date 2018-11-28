@@ -17,7 +17,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    df = pd.read_csv("data_inflation.csv", sep=",")
+    df = pd.read_csv("data/data_inflation.csv", sep=",")
 
     trace1 = Scatter(
         x=df["Date"], y=df["PumpPriceD"], name="Petrol Price", fill="tozeroy"
@@ -70,7 +70,7 @@ def index():
 
 
 dataset = tablib.Dataset()
-with open(os.path.join(os.path.dirname(__file__), "data_new.csv")) as f:
+with open(os.path.join(os.path.dirname(__file__), "data/data_new.csv")) as f:
     dataset.csv = f.read()
 
 
@@ -87,9 +87,9 @@ def update():
     extra_url = ", ".join(extra_url_raw)
     url = "https://www.gov.uk" + extra_url + "preview"
     for i, df in enumerate(pd.read_html(url)):
-        df.to_csv("data_new.csv")
+        df.to_csv("data/data_new.csv")
 
-    raw_data = pd.read_csv("data_new.csv", sep=",")
+    raw_data = pd.read_csv("data/data_new.csv", sep=",")
     data = raw_data.tail()
     return render_template("update.html", data=data)
 
@@ -97,9 +97,9 @@ def update():
 @app.route("/clean")
 def clean():
     # Remove blank columns
-    with open("data_new.csv", "r") as inputfile:
+    with open("data/data_new.csv", "r") as inputfile:
         rdr = csv.reader(inputfile)
-        with open("data_clean.csv", "w") as outputfile:
+        with open("data/data_clean.csv", "w") as outputfile:
             wtr = csv.writer(outputfile)
             for row in rdr:
                 try:
@@ -110,7 +110,7 @@ def clean():
                 except ValueError:
                     print("Removed: " + str(row))
 
-    raw_data = pd.read_csv("data_clean.csv", sep=",")
+    raw_data = pd.read_csv("data/data_clean.csv", sep=",")
     data = raw_data.tail()
     return render_template("clean.html", data=data)
 
@@ -118,7 +118,7 @@ def clean():
 # Reformat date and set Headers, Add inflation
 @app.route("/date")
 def date():
-    with open("data_clean.csv", "r") as inputfile:
+    with open("data/data_clean.csv", "r") as inputfile:
         rdr = csv.reader(inputfile)
         with open("data_date.csv", "w") as outputfile:
             wtr = csv.writer(outputfile)
@@ -193,9 +193,9 @@ def inflation():
         finaldata.append(item)
 
     # add inflation to relevent column
-    with open("data_date.csv", "r") as inputfile:
+    with open("data/data_date.csv", "r") as inputfile:
         rdr = csv.reader(inputfile)
-        with open("data_inflation.csv", "w") as outputfile:
+        with open("data/data_inflation.csv", "w") as outputfile:
             wtr = csv.writer(outputfile)
             for row in rdr:
                 if row[0][0] != str(2):
@@ -210,6 +210,15 @@ def inflation():
                             row.append(infl_rate)
                             wtr.writerow(row)
     return render_template("inflation.html", data=finaldata)
+
+
+@app.route("/adjusted")
+def adjusted():
+    df = pd.read_csv('data/data_inflation.csv')
+    # need to fix calculation
+    df['adjusted'] = df['inflation'].iloc[-1] / df['inflation']
+    df.to_csv('data/data_adjusted.csv')
+    return render_template('date.html', data=df)
 
 
 if __name__ == "__main__":
