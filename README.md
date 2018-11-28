@@ -25,4 +25,5 @@ To manually update the data, with the application running visit:
 - Use NL data to create a version for the Netherlands
 
 # Data Sources:
-- www.gov.uk for fuel price and inflation data
+- For Inflation data: https://www.ons.gov.uk/economy/inflationandpriceindices/
+- For Fuel price data: https://www.gov.uk/government/statistical-data-sets/oil-and-petroleum-products-weekly-statistics
